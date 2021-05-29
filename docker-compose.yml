@@ -1,0 +1,93 @@
+version: "3.0"
+services:
+  legato-mongodb:
+    image: mongo:latest
+    container_name: legato-mongodb
+    ports:
+      - 27017:27017
+    volumes:
+      - ./data/db:/data/db
+  eureka-server:
+    image: new-eureka-server
+    container_name: eureka-server
+    build:
+      context: ./eureka-server/
+      dockerfile: Dockerfile
+    ports:
+      - 8761:8761
+  zuul-gateway:
+    image: new-zuul-gateway
+    container_name: zuul-gateway
+    build:
+      context: ./zuul-gateway/
+      dockerfile: Dockerfile
+    ports:
+      - 5555:5555
+    environment:
+      - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://localhost:8761/eureka
+    links:
+      - legato-mongodb
+    networks:
+      - test-network
+    depends_on:
+      - eureka-server
+      - legato-mongodb
+  auth-service:
+    image: new-auth-service
+    container_name: auth-service
+    build:
+      context: ./auth-service/
+      dockerfile: Dockerfile
+    ports:
+      - 4006:4006
+    links:
+      - legato-mongodb
+    environment:
+      - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://localhost:8761/eureka
+    networks:
+      - test-network
+    depends_on:
+      - eureka-server
+      - zuul-gateway
+      - legato-mongodb
+  member-service:
+    image: new-member-service
+    container_name: member-service
+    build:
+      context: ./member-service/
+      dockerfile: Dockerfile
+    ports:
+      - 4001:4001
+    links:
+      - legato-mongodb
+    environment:
+      - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://localhost:8761/eureka
+    networks:
+      - test-network
+    depends_on:
+      - eureka-server
+      - zuul-gateway
+      - auth-service
+      - legato-mongodb
+  claim-service:
+    image: new-claim-service
+    container_name: claim-service
+    build:
+      context: ./claim-service/
+      dockerfile: Dockerfile
+    ports:
+      - 4005:4005
+    links:
+      - legato-mongodb
+    environment:
+      - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://localhost:8761/eureka
+    networks:
+      - test-network
+    depends_on:
+      - eureka-server
+      - auth-service
+      - zuul-gateway
+      - legato-mongodb
+
+networks:
+  test-network:

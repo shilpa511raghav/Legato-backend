@@ -1,0 +1,35 @@
+server:
+  port: 5555
+
+spring:
+  application:
+    name: zuul-gateway
+
+eureka:
+  instance:
+    hostname: localhost
+
+  client:
+    register-with-eureka: true
+    fetch-registry: true
+    service-url:
+      defaultZone: http://localhost:8761/eureka/
+
+zuul:
+  routes:
+    auth-service:
+      path: /auth-service/**
+      url: http://localhost:4006/
+    member-service:
+      path: /member-service/**
+      url: http://localhost:4001/
+    claim-service:
+      path: /claim-service/**
+      url: http://localhost:4005/
+
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: '*'
